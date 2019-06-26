@@ -1,0 +1,26 @@
+\documentclass{article}
+\usepackage{pgfpages, pgffor}
+\usepackage[colorlinks=true, urlcolor=cyan]{hyperref}
+\usepackage[user,savepos]{zref}
+
+\pgfpagesuselayout{2 on 1}
+
+\begin{document}
+\section{title}\label{sec:main}
+\subsection{subtitle}\label{sec:sub}
+\newpage
+
+\subsubsection{subsubtitle}\label{sec:sub2}
+\newpage
+
+Sec~\ref{sec:main}
+\newpage
+
+Subsec~\ref{sec:sub}
+\href{https://github.com}{GitHub}
+\newpage
+
+Subsubsec~\ref{sec:sub2}
+\href{https://google.com}{Google}
+
+\end{document}

@@ -1,0 +1,18 @@
+\documentclass{ctexart}
+\usepackage{pgfpages}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage[colorlinks=true, urlcolor=cyan]{hyperref}
+\usepackage{zhlipsum}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{--\thepage/\pageref{LastPage}--}
+\lhead{\href{github.com}{github}}
+
+\pgfpagesuselayout{2 on 1}  % 注释掉这里，页眉处可显示超链接
+
+\begin{document}
+\zhlipsum[-]
+\label{LastPage}
+\end{document}
