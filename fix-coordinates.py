@@ -138,20 +138,6 @@ for key in destName2pageObj:
     page_num = pdf_old._getPageNumberByIndirect(page_obj)
     destName2normalPage[key] = page_num
 
-# dests_normal: ArrayObject = pdf_old.trailer["/Root"]['/Names']['/Dests']['/Names']
-# destName2normalPage: Dict[TextStringObject, int] = {}
-#
-# name: TextStringObject
-# item: IndirectObject
-# for name, item in zip(*[iter(dests_normal)] * 2):
-#     dest: ArrayObject = item.getObject()  # e.g. [IndirectObject(3, 0), '/XYZ', 133.77, 667.2, NullObject]
-#     show_info(name, dest)
-#     print(pdf._getPageNumberByIndirect(dest[0]))
-#     if NameObject('/XYZ') == dest[1]:
-#         normal_page_num = pdf_old._getPageNumberByIndirect(dest[0])
-#         destName2normalPage[name] = normal_page_num
-#     else:
-#         raise NotImplementedError(f'Destination type {dest[1]} is not implemented')
 
 # read from and update coordinates in 'merged.pdf'
 dests_merged: ArrayObject = pdf.trailer["/Root"]['/Names']['/Dests']['/Names']
