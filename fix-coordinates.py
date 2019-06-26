@@ -178,57 +178,6 @@ pdf_writer = PdfFileWriter()
 # add document info
 pdf_writer.cloneReaderDocumentRoot(pdf)
 
-# # add pages
-# pdf_writer.appendPagesFromReader(pdf)
-# # add named destinations
-# named_dests: Dict[TextStringObject, Destination] = pdf.getNamedDestinations()
-# for named_dest in named_dests.values():
-#     pdf_writer.addNamedDestinationObject(named_dest)
-#     # show_info(named_dest)
-#
-#
-# root: DictionaryObject = pdf_writer._root_object
-# show_info(root, pre='Before insertion:')
-# # show_info(root, pdf.trailer['/Root'])
-# for key, value in pdf.trailer['/Root'].items():
-#     if key not in root:
-#         if key == NameObject('/OpenAction') and value[1] == '/Fit':
-#             # value: ArrayObject[IndirectObject to DictionaryObject (page), NameObject]
-#             page_num = pdf._getPageNumberByIndirect(value[0])
-#             page_num = update_page(layout, page_num)
-#
-#             if page_num == 0:
-#                 # value[0] is the IndirectObject to first page
-#                 writer_first_page = root['/Pages']['/Kids'][0]
-#                 root[key] = ArrayObject([writer_first_page, value[1]])
-#             else:
-#                 pass
-#             # root[key] = value
-#         elif key == NameObject('/PageMode'):
-#             root[key] = value
-#         elif key == NameObject('/Outlines'):
-#             pass
-#             # show_info(value.getObject(), pdf.outlines)
-#             # print(*pdf.outlines)
-#         else:
-#             raise NotImplementedError(show_info(key))
-#
-# show_info(root, pre='After insertion:')
-
-# openAction: ArrayObject = pdf.trailer['/Root']['/OpenAction']
-# # [IndirectObject to DictionaryObject, NameObject]
-# show_info(openAction[0].getObject(), pdf.getPage(0))
-# parent1 = openAction[0].getObject()['/Parent']
-# parent2 = pdf.getPage(0)['/Parent']
-#
-# show_info(parent1, parent2)
-#
-# show_info(pdf.trailer['/Root']['/Pages']['/Kids'][0].getObject())
-
-# for page_num in range(pdf.getNumPages()):
-#     page = pdf.getPage(page_num)  # PyPDF2.pdf.PageObject
-#     show_info(page)
-
 with open(fname_writer, 'wb') as out:
     # for page_num in range(pdf.getNumPages()):
     #     page = pdf.getPage(page_num)
