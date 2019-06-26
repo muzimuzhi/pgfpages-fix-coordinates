@@ -77,12 +77,7 @@ def get_named_destinations(pdf: PdfFileReader, tree=None, retval=None) -> Dict[N
         names = tree["/Names"]
         for i in range(0, len(names), 2):
             key = names[i].getObject()
-            val = names[i + 1]
-            # val = names[i+1].getObject()
-            # if isinstance(val, DictionaryObject) and '/D' in val:
-            #     val = val['/D']
-            # dest = pdf._buildDestination(key, val)
-            # if dest is not None:
+            val = names[i + 1]  # modified here
             retval[key] = val
 
     return retval
