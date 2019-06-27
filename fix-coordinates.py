@@ -44,7 +44,7 @@ def update_coordinates(media_box_old, media_box_new, layout, curr_layout, coord_
     return [FloatObject(round(x, 3)) for x in coord_new]
 
 
-# modified from PdfFileReader.getNamedDestinations()
+# based on PdfFileReader.getNamedDestinations()
 def get_named_destinations(pdf: PdfFileReader, tree=None, retval=None) -> Dict[NameObject, IndirectObject]:
     """
     Retrieves the named destinations present in the document.
@@ -83,19 +83,21 @@ def get_named_destinations(pdf: PdfFileReader, tree=None, retval=None) -> Dict[N
     return retval
 
 
-fname = ['./latex/normal.pdf', './latex/merged.pdf']
+path_to_tex = './latex/main.tex'
+fname = ['normal', 'nup']
+fname = [path_to_tex.replace('.tex', '-' + f + '.pdf') for f in fname]
 
-pdf_old = PdfFileReader(fname[0])
-pdf = PdfFileReader(fname[1])
+pdf_normal = PdfFileReader(fname[0])
+pdf_nup = PdfFileReader(fname[1])
 
-media_box_old: List[NumberObject] = get_media_box(pdf_old)
-media_box: List[NumberObject] = get_media_box(pdf)
+media_box_old: List[NumberObject] = get_media_box(pdf_normal)
+media_box: List[NumberObject] = get_media_box(pdf_nup)
 layout = [2, 1]
 
 # read from 'normal.pdf', store page2annots as list
 page2annots = deque()
-for page_num in range(pdf_old.getNumPages()):
-    page = pdf_old.getPage(page_num)  # PyPDF2.pdf.PageObject
+for page_num in range(pdf_normal.getNumPages()):
+    page = pdf_normal.getPage(page_num)  # PyPDF2.pdf.PageObject
     if '/Annots' in page:
         curr_layout = calculate_current_layout(layout, page_num)
         for annot in page['/Annots']:
@@ -103,8 +105,8 @@ for page_num in range(pdf_old.getNumPages()):
 
 
 # update coordinates of annotations
-for page_num in range(pdf.getNumPages()):
-    page = pdf.getPage(page_num)  # PyPDF2.pdf.PageObject
+for page_num in range(pdf_nup.getNumPages()):
+    page = pdf_nup.getPage(page_num)  # PyPDF2.pdf.PageObject
     if '/Annots' in page:
         for annot in page['/Annots']:
             annot: DictionaryObject = annot.getObject()
@@ -126,16 +128,16 @@ for page_num in range(pdf.getNumPages()):
 
 
 # read from 'normal.pdf', store name2page as dict
-destName2pageObj = get_named_destinations(pdf_old)
+destName2pageObj = get_named_destinations(pdf_normal)
 destName2normalPage: Dict[NameObject, int] = {}
 for key in destName2pageObj:
     page_obj = destName2pageObj[key]
-    page_num = pdf_old._getPageNumberByIndirect(page_obj)
+    page_num = pdf_normal._getPageNumberByIndirect(page_obj)
     destName2normalPage[key] = page_num
 
 
 # read from and update coordinates in 'merged.pdf'
-dests_merged: ArrayObject = pdf.trailer["/Root"]['/Names']['/Dests']['/Names']
+dests_merged: ArrayObject = pdf_nup.trailer["/Root"]['/Names']['/Dests']['/Names']
 for name, item in zip(*[iter(dests_merged)] * 2):
     dest: ArrayObject = item.getObject()
     if NameObject('/XYZ') == dest[1]:
@@ -149,19 +151,19 @@ for name, item in zip(*[iter(dests_merged)] * 2):
         raise NotImplementedError(f'Destination type {dest[1]} is not implemented')
 
 # write to new file
-fname_writer = './latex/merged-update.pdf'
+fname_writer = fname[1].replace('.pdf', '-fixed.pdf')
 pdf_writer = PdfFileWriter()
 
 # method PdfFileWriter.cloneDocumentFromReader() is problematic,
 #   see https://github.com/mstamy2/PyPDF2/issues/219
-# pdf_writer.appendPagesFromReader(pdf)
+# pdf_writer.appendPagesFromReader(pdf_nup)
 
 # add document info
-pdf_writer.cloneReaderDocumentRoot(pdf)
+pdf_writer.cloneReaderDocumentRoot(pdf_nup)
 
 with open(fname_writer, 'wb') as out:
-    # for page_num in range(pdf.getNumPages()):
-    #     page = pdf.getPage(page_num)
+    # for page_num in range(pdf_nup.getNumPages()):
+    #     page = pdf_nup.getPage(page_num)
     #     pdf_writer.addPage(page)
 
     pdf_writer.write(out)
