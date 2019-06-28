@@ -7,13 +7,11 @@ from common import *
 
 path_to_tex = './latex/main.tex'
 fname_suffix = ['normal', 'nup']
-fname = [path_to_tex.replace('.tex', '-' + f + '.pdf') for f in fname_suffix]
-fname_writer = fname[1].replace('.pdf', '-fixed.pdf')
+fname_reader = [path_to_tex.replace('.tex', f'-{f}.pdf') for f in fname_suffix]
+fname_writer = fname_reader[1].replace('.pdf', '-fixed.pdf')
 
-LAYOUT = (2, 1)
-
-pdf_normal = PdfFileReader(fname[0])
-pdf_nup = PdfFileReader(fname[1])
+pdf_normal = PdfFileReader(fname_reader[0])
+pdf_nup = PdfFileReader(fname_reader[1])
 pdf_writer = PdfFileWriter()
 
 
@@ -24,7 +22,8 @@ def get_media_box(pdf: PdfFileReader) -> Tuple[NumberObject]:
     return tuple(media_box)
 
 
-# get media boxes
+# constants
+LAYOUT = (2, 1)
 MEDIA_BOX_NORMAL: Tuple[NumberObject] = get_media_box(pdf_normal)
 MEDIA_BOX_NUP: Tuple[NumberObject] = get_media_box(pdf_nup)
 
@@ -102,7 +101,7 @@ def get_named_destinations(pdf: PdfFileReader, tree=None, retval=None) -> Dict[N
 
 def get_page2annots(pdf: PdfFileReader) -> Deque:
     """
-    Return list of (page_num, annot_obj) pairs.
+    Return list of [page_num, annot_obj.getObject()] pairs.
     """
     page2annots = deque()
 
@@ -110,6 +109,10 @@ def get_page2annots(pdf: PdfFileReader) -> Deque:
         page = pdf.getPage(page_num)  # page: PyPDF2.pdf.PageObject
         if '/Annots' in page:
             for annot in page['/Annots']:
+                # annot.getObject() returns a DictionaryObject which does not contain any IndirectObject(s),
+                #   hence is used for latter comparisons
+                #
+                # show_info(annot.getObject())
                 page2annots.append([page_num, annot.getObject()])
 
     return page2annots
@@ -124,8 +127,8 @@ def set_annotations(pdf: PdfFileReader, page2annots: Deque) -> None:
                 annot: DictionaryObject = annot.getObject()
 
                 # assume order is reserved
-                page2annot = page2annots.popleft()
-                assert annot == page2annot[1]
+                page2annot: List = page2annots.popleft()
+                assert annot == page2annot[1]  # calls DictionaryObject.__eq__(self, DictionaryObject)
                 curr_layout = calculate_current_layout(LAYOUT, page2annot[0])
 
                 rect: ArrayObject = annot['/Rect']
@@ -165,13 +168,32 @@ def set_named_destinations(pdf: PdfFileReader, name2page: Dict[NameObject, int])
             raise NotImplementedError(f'Destination type {dest[1]} is not implemented')
 
 
-# update coordinates of annotations
+# Main scheme:
+#  - Read from pdf_normal
+#  - Read from and update info of pdf_nup
+#  - Write update pdf_nup to pdf_writer
+#
+# Other considerations:
+#  - Object number changes between pdf_normal and pdf_nup, therefore is not suitable for identifications.
+#  - PdfFileReader.getNamedDestinations() retrieves contents, but not references of named destination objects,
+#    therefore I define a modified get_named_destinations function.
+
+# Scheme usage 1: update explicit destinations contained in page level annotations
+#   1. Get list of pairs [page_num, annot_contents] from pdf_normal
+#   2. Identify annotations in pdf_normal and pdf_nup by annot_contents, construct mapping
+#      "normal_page - annot_contents - nup_page"
+#   3. Use mapping to calculate the current page layout, and finally update coordinates
 normalPage2annots = get_page2annots(pdf_normal)
 set_annotations(pdf_nup, normalPage2annots)
 
-# update coordinates of named destinations
+# Scheme usage 2: Update named destinations contained in document level "document catalog"
+#    1. Get directory of pairs {dest_name: page_num} from pdf_normal
+#    2. Identify named destinations between pdf_normal and pdf_nup by dest_name, construct mapping
+#       "normal_page - dest_name - nup_page"
+#    3. Use mapping to calculate the current page layout, and finally update coordinates
 destName2normalPage = get_name2page(pdf_normal)
 set_named_destinations(pdf_nup, destName2normalPage)
+# This also fixes destinations of outlines (aka. bookmarks) which '/GOTO' a named destination
 
 # write to new file
 pdf_writer.cloneReaderDocumentRoot(pdf_nup)
