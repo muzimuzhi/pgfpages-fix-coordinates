@@ -1,7 +1,9 @@
+import decimal
 import argparse
 
 
 from common import *
+
 
 # PyPdf2 usage intro:
 #  - https://github.com/mstamy2/PyPDF2/issues/107
@@ -26,7 +28,7 @@ def get_media_box(pdf: PdfFileReader) -> Tuple[NumberObject]:
     page_tree: DictionaryObject = pdf.trailer["/Root"]['/Pages']
     media_box = page_tree['/MediaBox'][2:]
 
-    return tuple(media_box)
+    return tuple([float(i) for i in media_box])
 
 
 # constants
@@ -48,7 +50,7 @@ def calculate_current_layout(layout, page_num):
 
 def update_coordinates(coord_old, curr_layout, layout=LAYOUT, media_old=MEDIA_BOX_NORMAL, media_new=MEDIA_BOX_NUP):
     def size_divide(size1, size2, op=lambda x, y: x / y):
-        if type(size2) in [int, float]:
+        if type(size2) in [int, float, decimal.Decimal]:
             return [op(size1[0], size2), op(size1[1], size2)]
         else:
             return [op(size1[0], size2[0]), op(size1[1], size2[1])]
@@ -120,7 +122,9 @@ def get_page2annots(pdf: PdfFileReader) -> Deque:
                 #   hence is used for latter comparisons
                 #
                 # show_info(annot.getObject())
-                page2annots.append([page_num, annot.getObject()])
+                annot = annot.getObject()
+                if '/Rect' in annot:
+                    page2annots.append([page_num, annot])
 
     return page2annots
 
@@ -132,10 +136,12 @@ def set_annotations(pdf: PdfFileReader, page2annots: Deque) -> None:
         if '/Annots' in page:
             for annot in page['/Annots']:
                 annot: DictionaryObject = annot.getObject()
+                if '/Rect' not in annot:
+                    continue
 
                 # assume order is reserved
                 page2annot: List = page2annots.popleft()
-                assert annot == page2annot[1]  # calls DictionaryObject.__eq__(self, DictionaryObject)
+                assert annot['/Rect'] == page2annot[1]['/Rect']  # calls DictionaryObject.__eq__(self, DictionaryObject)
                 curr_layout = calculate_current_layout(LAYOUT, page2annot[0])
 
                 rect: ArrayObject = annot['/Rect']
