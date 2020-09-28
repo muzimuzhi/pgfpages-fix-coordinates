@@ -1,0 +1,17 @@
+% from https://github.com/pgf-tikz/pgf/issues/744
+\documentclass{beamer}
+
+% from beamer 3.59, "pgfpages" is auto loaded, see PRs 585 and 601
+%\setbeameroption{show notes}                % normal
+\setbeameroption{show notes on second screen} % nup
+\setbeamertemplate{note page}{\insertnote}
+
+
+\hypersetup{pdfborder={0 0 1}}
+
+\begin{document}
+\begin{frame}{Foo}
+  \url{http://www.google.com}
+  \note{\url{www.google.com}}
+\end{frame}
+\end{document}
